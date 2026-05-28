@@ -1,0 +1,1864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CUBi NOI Calculator | GreenSmart</title>
+<meta name="description" content="Community Utility Billing Integration - Office-to-Storage Conversion NOI Calculator">
+
+<!-- PDF Export Libraries -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+
+<style>
+  /* ===== BASE STYLES ===== */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg-primary: #f8fafc;
+    --bg-card: #ffffff;
+    --text-primary: #1e293b;
+    --text-secondary: #64748b;
+    --border: #e2e8f0;
+    --primary: #3b82f6;
+    --success: #16a34a;
+    --warning: #f59e0b;
+    --danger: #dc2626;
+    --purple: #7c3aed;
+    --header-bg: #0f172a;
+  }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    padding: 16px;
+    line-height: 1.5;
+    font-size: 14px;
+    transition: background 0.3s, color 0.3s;
+  }
+  body.dark-mode {
+    --bg-primary: #0f172a;
+    --bg-card: #1e293b;
+    --text-primary: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --border: #334155;
+    --header-bg: #020617;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+  }
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    background: var(--bg-card);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+    overflow: hidden;
+  }
+  
+  /* ===== HEADER ===== */
+  .header {
+    background: var(--header-bg);
+    padding: 20px 28px;
+    border-bottom: 3px solid var(--primary);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .header h1 {
+    color: #ffffff;
+    font-size: 24px;
+    font-weight: 700;
+  }
+  .header h1 span { color: var(--primary); }
+  .header p {
+    color: #94a3b8;
+    font-size: 13px;
+    margin-top: 4px;
+  }
+  .header-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  
+  /* ===== BUTTONS ===== */
+  .calc-btn-top {
+    padding: 8px 20px;
+    background: var(--success);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .calc-btn-top:hover { background: #15803d; transform: translateY(-1px); }
+  .calc-btn-top:active { transform: translateY(0); }
+  .calc-btn-top.blue { background: var(--primary); }
+  .calc-btn-top.blue:hover { background: #2563eb; }
+  .calc-btn-top.purple { background: var(--purple); }
+  .calc-btn-top.purple:hover { background: #6d28d9; }
+  .calc-btn-top.orange { background: var(--warning); color: #1e293b; }
+  .calc-btn-top.orange:hover { background: #d97706; }
+  .calc-btn-top.red { background: var(--danger); }
+  .calc-btn-top.red:hover { background: #b91c1c; }
+  .calc-btn-top.gray { background: #64748b; }
+  .calc-btn-top.gray:hover { background: #475569; }
+  .calc-btn-top:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+  
+  /* ===== SUBHEADER & SCENARIO BAR ===== */
+  .subheader {
+    background: #f1f5f9;
+    padding: 12px 28px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  body.dark-mode .subheader { background: #1e293b; }
+  .subheader .left {
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+  .subheader .left strong { color: var(--text-primary); }
+  .scenario-bar {
+    background: #f1f5f9;
+    padding: 12px 28px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  body.dark-mode .scenario-bar { background: #1e293b; }
+  #scenario-load {
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 13px;
+    background: var(--bg-card);
+    color: var(--text-primary);
+    min-width: 200px;
+  }
+  #scenario-count {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-left: auto;
+  }
+  
+  /* ===== TOOLTIP ===== */
+  .tooltip {
+    display: inline-block;
+    width: 16px; height: 16px;
+    background: var(--primary);
+    color: white;
+    border-radius: 50%;
+    text-align: center;
+    font-size: 10px;
+    line-height: 16px;
+    cursor: help;
+    margin-left: 4px;
+    position: relative;
+  }
+  .tooltip:hover::after {
+    content: attr(title);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--header-bg);
+    color: white;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    white-space: nowrap;
+    z-index: 100;
+    width: max-content;
+    max-width: 250px;
+    text-align: center;
+  }
+  
+  /* ===== PICKLIST SECTIONS ===== */
+  .picklist-section {
+    padding: 20px 28px;
+    border-bottom: 1px solid var(--border);
+  }
+  .picklist-section h3 {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--text-secondary);
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--primary);
+    display: inline-block;
+  }
+  .picklist-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+  .picklist-item {
+    display: flex;
+    flex-direction: column;
+  }
+  .picklist-item label {
+    font-size: 11px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+  }
+  .picklist-item select,
+  .picklist-item input {
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 13px;
+    background: var(--bg-card);
+    color: var(--text-primary);
+    font-family: 'Segoe UI', monospace;
+  }
+  .picklist-item select:focus,
+  .picklist-item input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+  }
+  .picklist-item .hint {
+    font-size: 10px;
+    color: var(--text-secondary);
+    margin-top: 4px;
+  }
+  
+  /* ===== MAIN INPUTS ===== */
+  .main-inputs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    padding: 20px 28px;
+    border-bottom: 1px solid var(--border);
+  }
+  .input-panel h3 {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--text-secondary);
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--primary);
+    display: inline-block;
+  }
+  .input-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid #f1f5f9;
+  }
+  body.dark-mode .input-row { border-bottom-color: #334155; }
+  .input-row label {
+    font-size: 13px;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .input-row input,
+  .input-row select {
+    width: 160px;
+    padding: 6px 10px;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    font-size: 13px;
+    text-align: right;
+    font-family: 'Segoe UI', monospace;
+    background: var(--bg-card);
+    color: var(--text-primary);
+  }
+  .input-row select { text-align: left; }
+  .input-row input:focus,
+  .input-row select:focus {
+    outline: none;
+    border-color: var(--primary);
+  }
+  
+  /* ===== RESULTS ===== */
+  .results-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    padding: 20px 28px;
+    border-bottom: 1px solid var(--border);
+  }
+  .result-box {
+    border-radius: 8px;
+    padding: 20px;
+    border: 2px solid;
+  }
+  .result-box.before {
+    border-color: var(--danger);
+    background: #fef2f2;
+  }
+  .result-box.after {
+    border-color: var(--success);
+    background: #f0fdf4;
+  }
+  body.dark-mode .result-box.before { background: #450a0a; }
+  body.dark-mode .result-box.after { background: #052e16; }
+  .result-box h4 {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 14px;
+  }
+  .result-box.before h4 { color: var(--danger); }
+  .result-box.after h4 { color: var(--success); }
+  .res-line {
+    display: flex;
+    justify-content: space-between;
+    padding: 5px 0;
+    font-size: 13px;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+  }
+  body.dark-mode .res-line { border-bottom-color: rgba(255,255,255,0.05); }
+  .res-line .lbl { color: var(--text-secondary); }
+  .res-line .val { color: var(--text-primary); font-weight: 500; }
+  .res-line.total {
+    border-top: 2px solid;
+    border-bottom: none;
+    margin-top: 8px;
+    padding-top: 10px;
+  }
+  .result-box.before .res-line.total { border-color: var(--danger); }
+  .result-box.after .res-line.total { border-color: var(--success); }
+  .res-line.total .lbl { font-weight: 700; color: var(--text-primary); }
+  .res-line.total .val { font-weight: 700; font-size: 14px; }
+  .result-box.before .res-line.total .val { color: var(--danger); }
+  .result-box.after .res-line.total .val { color: var(--success); }
+  .val-line {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0 0;
+    margin-top: 6px;
+  }
+  .val-line .lbl { font-size: 12px; color: var(--text-secondary); }
+  .val-line .val { font-size: 14px; font-weight: 700; color: var(--text-primary); }
+  
+  /* ===== UPLIFT BANNER ===== */
+  .uplift {
+    background: #f0fdf4;
+    border: 2px solid var(--success);
+    border-radius: 8px;
+    padding: 18px 28px;
+    margin: 16px 28px;
+    text-align: center;
+  }
+  body.dark-mode .uplift { background: #052e16; }
+  .uplift h4 {
+    color: var(--success);
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+  }
+  .uplift-row {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    flex-wrap: wrap;
+  }
+  .uplift-item h5 {
+    font-size: 11px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .uplift-item p {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--success);
+  }
+  
+  /* ===== BOTTOM PANELS ===== */
+  .bottom-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+    padding: 16px 28px;
+  }
+  .bottom-box {
+    background: #f8fafc;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+  }
+  body.dark-mode .bottom-box { background: #1e293b; }
+  .bottom-box h4 {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+    padding-bottom: 6px;
+    border-bottom: 2px solid;
+    display: inline-block;
+  }
+  .bottom-box.ryan h4 { color: #ea580c; border-color: #ea580c; }
+  .bottom-box.fin h4 { color: var(--purple); border-color: var(--purple); }
+  .bottom-box.deal h4 { color: #d97706; border-color: #d97706; }
+  .b-line {
+    display: flex;
+    justify-content: space-between;
+    padding: 5px 0;
+    font-size: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .b-line .lbl { color: var(--text-secondary); }
+  .b-line .val { color: var(--text-primary); font-weight: 500; }
+  .b-highlight {
+    background: var(--bg-card);
+    border-radius: 6px;
+    padding: 10px;
+    margin-top: 10px;
+    text-align: center;
+    border: 1px solid var(--border);
+  }
+  .b-highlight p {
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+  .b-highlight p strong {
+    color: var(--success);
+    font-size: 14px;
+  }
+  
+  /* ===== ASSUMPTIONS PANEL ===== */
+  .assumptions-panel {
+    background: #f8fafc;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 28px;
+    margin: 16px 28px;
+  }
+  body.dark-mode .assumptions-panel { background: #1e293b; }
+  .assumptions-panel h4 {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+    color: var(--text-primary);
+  }
+  .assumptions-panel ul {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-left: 20px;
+    margin-bottom: 12px;
+  }
+  .assumptions-panel li { margin-bottom: 4px; }
+  
+  /* ===== FOOTER ===== */
+  .footer {
+    background: var(--header-bg);
+    padding: 16px 28px;
+    text-align: center;
+  }
+  .footer p {
+    font-size: 11px;
+    color: #94a3b8;
+  }
+  .footer-stats {
+    display: flex;
+    justify-content: center;
+    gap: 32px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+  }
+  .footer-stats div h5 {
+    font-size: 16px;
+    color: var(--primary);
+    font-weight: 700;
+  }
+  .footer-stats div p {
+    font-size: 10px;
+    color: #64748b;
+  }
+  
+  /* ===== COMPARISON VIEW ===== */
+  #comparison-view {
+    display: none;
+    padding: 20px 28px;
+    background: #f8fafc;
+    border-bottom: 1px solid var(--border);
+  }
+  body.dark-mode #comparison-view { background: #1e293b; }
+  #comparison-view h3 {
+    font-size: 14px;
+    color: var(--text-primary);
+    margin-bottom: 16px;
+  }
+  #comparison-view .result-box {
+    background: var(--bg-card) !important;
+  }
+  
+  /* ===== MOBILE SUMMARY CARD ===== */
+  #mobile-summary {
+    display: none;
+    background: #f0fdf4;
+    border: 2px solid var(--success);
+    border-radius: 8px;
+    padding: 16px;
+    margin: 16px 28px;
+  }
+  body.dark-mode #mobile-summary { background: #052e16; }
+  #mobile-summary h4 {
+    color: var(--success);
+    margin-bottom: 12px;
+    font-size: 14px;
+  }
+  #mobile-summary .summary-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    font-size: 18px;
+  }
+  #mobile-summary .summary-grid .lbl {
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+  #mobile-summary .summary-grid .val {
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+  
+  /* ===== TOAST NOTIFICATION ===== */
+  .toast {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: var(--header-bg);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    z-index: 1000;
+    box-shadow: 0 10px 15px -3px rgba(0,0,0,0.2);
+    animation: slideIn 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  @keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  
+  /* ===== SKIP LINK (Accessibility) ===== */
+  .skip-link {
+    position: absolute;
+    top: -40px;
+    left: 0;
+    background: var(--primary);
+    color: white;
+    padding: 8px 16px;
+    z-index: 100;
+    transition: top 0.3s;
+  }
+  .skip-link:focus { top: 0; }
+  
+  /* ===== PRINT STYLES ===== */
+  @media print {
+    .calc-btn-top, .scenario-bar, .picklist-section, .main-inputs, 
+    .assumptions-panel button, .footer-stats, #comparison-view, #mobile-summary {
+      display: none !important;
+    }
+    .container { box-shadow: none; border: none; }
+    .result-box { break-inside: avoid; border: 1px solid #000 !important; }
+    body { padding: 0; background: white; color: black; }
+  }
+  
+  /* ===== RESPONSIVE / MOBILE ===== */
+  @media (max-width: 900px) {
+    .picklist-grid { grid-template-columns: repeat(2, 1fr); }
+    .main-inputs { grid-template-columns: 1fr; }
+    .results-grid { grid-template-columns: 1fr; }
+    .bottom-grid { grid-template-columns: 1fr; }
+    .uplift-row { flex-direction: column; gap: 12px; }
+    .header { flex-direction: column; align-items: flex-start; }
+    .header-actions { width: 100%; justify-content: flex-start; }
+  }
+  
+  /* ===== MOBILE FIELD MODE ===== */
+  body.mobile-mode {
+    font-size: 16px;
+    padding: 8px;
+  }
+  body.mobile-mode .container {
+    border-radius: 8px;
+    overflow: visible;
+  }
+  body.mobile-mode .picklist-grid,
+  body.mobile-mode .bottom-grid,
+  body.mobile-mode .summary-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px;
+  }
+  body.mobile-mode .picklist-item {
+    margin-bottom: 12px;
+    padding: 12px;
+    background: var(--bg-card);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+  }
+  body.mobile-mode input,
+  body.mobile-mode select {
+    padding: 12px !important;
+    font-size: 16px !important;
+    min-height: 44px;
+    width: 100% !important;
+  }
+  body.mobile-mode .calc-btn-top {
+    padding: 12px 24px;
+    font-size: 16px;
+    min-height: 44px;
+    width: 100%;
+    justify-content: center;
+  }
+  body.mobile-mode .collapsible-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: #f1f5f9;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+  body.dark-mode .mobile-mode .collapsible-header { background: #334155; }
+  body.mobile-mode .collapsible-content {
+    display: none;
+    padding: 0 16px 16px;
+  }
+  body.mobile-mode .collapsible-content.active {
+    display: block;
+  }
+  body.mobile-mode .results-grid {
+    grid-template-columns: 1fr !important;
+  }
+  body.mobile-mode .result-box {
+    padding: 16px;
+  }
+  body.mobile-mode .uplift-row {
+    flex-direction: column;
+    gap: 16px;
+  }
+  body.mobile-mode .uplift-item p {
+    font-size: 28px;
+  }
+  body.mobile-mode .footer-stats {
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  body.mobile-mode .hint,
+  body.mobile-mode .subheader .left,
+  body.mobile-mode .picklist-section h3:not(.collapsible-header),
+  body.mobile-mode .input-panel h3,
+  body.mobile-mode .res-line:not(.total) {
+    display: none;
+  }
+  body.mobile-mode #mobile-summary {
+    display: block;
+  }
+  body.mobile-mode .assumptions-panel {
+    margin: 8px 16px;
+    padding: 12px 16px;
+  }
+}
+</style>
+<base target="_blank">
+</head>
+<body>
+<a href="#main-content" class="skip-link">Skip to calculator</a>
+
+<div class="container">
+  <div class="header">
+    <div>
+      <h1><span>CUBi</span> NOI Calculator</h1>
+      <p>Community Utility Billing Integration | GreenSmart Calgary Office Conversion Model</p>
+    </div>
+    <div class="header-actions">
+      <button class="calc-btn-top" onclick="calculate()">⟳ Recalculate</button>
+      <button class="calc-btn-top purple" onclick="exportPDF()">📄 Export PDF</button>
+      <button class="calc-btn-top blue" onclick="toggleMobileMode()">📱 Field Mode</button>
+      <button class="calc-btn-top orange" onclick="toggleClientMode()">🎯 Client View</button>
+      <button class="calc-btn-top gray" onclick="toggleDarkMode()">🌙 Dark</button>
+    </div>
+  </div>
+  
+  <div class="subheader">
+    <div class="left">Property: <strong id="prop-summary">Office - Tier 2 (Calgary)</strong> | Market: <strong id="market-summary">Distressed</strong></div>
+    <button class="calc-btn-top" style="background:#16a34a;" onclick="calculate()">▶ Calculate NOI</button>
+  </div>
+
+  <!-- SCENARIO MANAGER -->
+  <div class="scenario-bar">
+    <button class="calc-btn-top blue" onclick="saveScenarioPrompt()">💾 Save Scenario</button>
+    <select id="scenario-load" aria-label="Load saved scenario">
+      <option value="">– Load Saved Scenario –</option>
+    </select>
+    <button class="calc-btn-top gray" onclick="compareMode()">🔍 Compare</button>
+    <button class="calc-btn-top red" onclick="clearAllScenarios()">🗑️ Clear All</button>
+    <span id="scenario-count" aria-live="polite">0 saved</span>
+  </div>
+
+  <!-- COMPARISON VIEW -->
+  <div id="comparison-view" role="region" aria-label="Scenario comparison">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+      <h3>📊 Scenario Comparison</h3>
+      <button onclick="exitCompare()" class="calc-btn-top gray" style="padding:6px 12px;font-size:12px;">✕ Close</button>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+      <div id="compare-scenario-1" class="result-box before"></div>
+      <div id="compare-scenario-2" class="result-box after"></div>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div id="main-content">
+    
+    <!-- CMHC-STYLE PICK LISTS -->
+    <div class="picklist-section">
+      <h3>Property Classification</h3>
+      <div class="picklist-grid">
+        <div class="picklist-item">
+          <label>Property Type
+            <span class="tooltip" title="Building category affects rent assumptions and cap rates">ⓘ</span>
+          </label>
+          <select id="prop_type" onchange="autoFillDefaults()" aria-label="Select property type">
+            <option value="office_tier2" selected>Office - Tier 2 (Calgary)</option>
+            <option value="office_tier1">Office - Tier 1 (Downtown)</option>
+            <option value="mixed_use">Mixed-Use Commercial</option>
+            <option value="industrial">Light Industrial</option>
+            <option value="retail">Retail Strip</option>
+          </select>
+          <div class="hint">Select building category</div>
+        </div>
+        <div class="picklist-item">
+          <label>Market Conditions
+            <span class="tooltip" title="Current vacancy environment affects pricing strategy">ⓘ</span>
+          </label>
+          <select id="market_cond" onchange="autoFillDefaults()" aria-label="Select market condition">
+            <option value="crisis" selected>Distressed (30%+ vacancy)</option>
+            <option value="weak">Weak (20-30% vacancy)</option>
+            <option value="stable">Stable (10-20% vacancy)</option>
+            <option value="strong">Strong (&lt;10% vacancy)</option>
+          </select>
+          <div class="hint">Current market environment</div>
+        </div>
+        <div class="picklist-item">
+          <label>Conversion Strategy
+            <span class="tooltip" title="Repositioning approach affects revenue mix">ⓘ</span>
+          </label>
+          <select id="conv_strategy" onchange="autoFillDefaults()" aria-label="Select conversion strategy">
+            <option value="full_storage" selected>Full Storage Conversion</option>
+            <option value="partial_storage">Partial Storage + Office</option>
+            <option value="mixed_use_conv">Mixed-Use (Storage + Data Centre)</option>
+            <option value="micro_units">Micro-Storage Units</option>
+          </select>
+          <div class="hint">Repositioning approach</div>
+        </div>
+        <div class="picklist-item">
+          <label>Financing Structure
+            <span class="tooltip" title="Capital stack structure affects LTV and terms">ⓘ</span>
+          </label>
+          <select id="fin_structure" aria-label="Select financing structure">
+            <option value="gas_ltv" selected>Gas Reserve LTV (70%)</option>
+            <option value="gas_full">Gas Reserve Full Collateral</option>
+            <option value="owner_guarantor">Owner Guarantor + Gas</option>
+            <option value="hybrid">Hybrid (Gas + Equity)</option>
+          </select>
+          <div class="hint">Capital stack structure</div>
+        </div>
+        <div class="picklist-item">
+          <label>Deal Type
+            <span class="tooltip" title="Ownership percentage and guarantor requirements">ⓘ</span>
+          </label>
+          <select id="deal_type_select" aria-label="Select deal structure">
+            <option value="a_20" selected>Deal A: Owner 20% (No Guarantor)</option>
+            <option value="b_55">Deal B: Owner 55% (With Guarantor)</option>
+            <option value="b_60">Deal B: Owner 60% (Full Guarantor)</option>
+            <option value="custom">Custom Structure</option>
+          </select>
+          <div class="hint">Ownership / guarantor arrangement</div>
+        </div>
+        <div class="picklist-item">
+          <label>CUBi Integration Level
+            <span class="tooltip" title="Platform deployment scope affects fees and revenue share">ⓘ</span>
+          </label>
+          <select id="cubi_level" aria-label="Select CUBi integration level">
+            <option value="full" selected>Full CUBi (Billing + VPP + Grid)</option>
+            <option value="billing_only">Billing Only</option>
+            <option value="vpp_only">VPP + Grid Services</option>
+            <option value="basic">Basic Monitoring</option>
+          </select>
+          <div class="hint">CUBi platform deployment</div>
+        </div>
+        <div class="picklist-item">
+          <label>Genset Supplier
+            <span class="tooltip" title="Generator vendor affects equipment cost and performance">ⓘ</span>
+          </label>
+          <select id="genset_supplier" onchange="autoFillDefaults()" aria-label="Select genset supplier">
+            <option value="ultrastream" selected>UltraStream (GBP 7,000)</option>
+            <option value="redtech">RedTech (GBP 20,000)</option>
+            <option value="cummins">Cummins (GBP 100,000)</option>
+            <option value="cat">Caterpillar (GBP 200,000)</option>
+          </select>
+          <div class="hint">Engine/generator vendor</div>
+        </div>
+        <div class="picklist-item">
+          <label>Vehicle Fleet
+            <span class="tooltip" title="Fleet type affects municipal compliance and operating costs">ⓘ</span>
+          </label>
+          <select id="vehicle_fleet" aria-label="Select vehicle fleet type">
+            <option value="hybrid" selected>Hybrid Communal Cars</option>
+            <option value="ev">Full EV Fleet</option>
+            <option value="gas_electric">Gas-Electric Combo</option>
+            <option value="none">No Vehicles</option>
+          </select>
+          <div class="hint">Municipal compliance fleet</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN INPUTS -->
+    <div class="main-inputs">
+      <div class="input-panel">
+        <h3>Building Parameters</h3>
+        <div class="input-row">
+          <label>Total Building Sq Ft
+            <span class="tooltip" title="Gross leasable area of the property">ⓘ</span>
+          </label>
+          <input type="number" id="building_sqft" value="200000" aria-label="Total building square footage">
+        </div>
+        <div class="input-row">
+          <label>Office Rent ($/sq ft/mo)
+            <span class="tooltip" title="Current or projected office rental rate">ⓘ</span>
+          </label>
+          <input type="number" id="office_rent" value="3.50" step="0.01" aria-label="Office rent per square foot per month">
+        </div>
+        <div class="input-row">
+          <label>Current Vacancy (%)
+            <span class="tooltip" title="Percentage of unleased space">ⓘ</span>
+          </label>
+          <input type="number" id="vacancy" value="30" step="0.1" min="0" max="100" aria-label="Current vacancy percentage">
+        </div>
+        <div class="input-row">
+          <label>Operating Expenses ($/mo)
+            <span class="tooltip" title="Property management, maintenance, admin costs">ⓘ</span>
+          </label>
+          <input type="number" id="op_expenses" value="190000" aria-label="Monthly operating expenses">
+        </div>
+        <div class="input-row">
+          <label>Cap Rate (%)
+            <span class="tooltip" title="Capitalization rate: NOI ÷ Property Value. Lower = higher valuation.">ⓘ</span>
+          </label>
+          <select id="cap_rate" aria-label="Select capitalization rate">
+            <option value="4.0">4.0% (Prime)</option>
+            <option value="4.5">4.5%</option>
+            <option value="5.0">5.0%</option>
+            <option value="5.5">5.5%</option>
+            <option value="6.0" selected>6.0% (Standard)</option>
+            <option value="6.5">6.5%</option>
+            <option value="7.0">7.0% (Distressed)</option>
+            <option value="8.0">8.0% (High Risk)</option>
+          </select>
+        </div>
+        <div class="input-row">
+          <label>Property Tax ($/mo)</label>
+          <input type="number" id="prop_tax" value="25000" aria-label="Monthly property tax">
+        </div>
+        <div class="input-row">
+          <label>Insurance ($/mo)</label>
+          <input type="number" id="insurance" value="8000" aria-label="Monthly insurance cost">
+        </div>
+        <div class="input-row">
+          <label>Utilities (Heat/Elec) ($/mo)</label>
+          <input type="number" id="utilities" value="35000" aria-label="Monthly utility costs">
+        </div>
+      </div>
+      <div class="input-panel">
+        <h3>Conversion & CUBi Parameters</h3>
+        <div class="input-row">
+          <label>Parking Stalls (Total)</label>
+          <input type="number" id="parking_total" value="275" aria-label="Total parking stalls">
+        </div>
+        <div class="input-row">
+          <label>Stalls Converted
+            <span class="tooltip" title="Number of parking stalls converted to storage">ⓘ</span>
+          </label>
+          <input type="number" id="stalls_converted" value="150" aria-label="Number of stalls converted to storage">
+        </div>
+        <div class="input-row">
+          <label>Storage Sq Ft per Stall
+            <span class="tooltip" title="Gross sq ft per converted stall (before efficiency factor)">ⓘ</span>
+          </label>
+          <select id="sqft_per_stall" aria-label="Select storage square footage per stall">
+            <option value="500">500 sq ft (Compact)</option>
+            <option value="750">750 sq ft (Standard)</option>
+            <option value="1000" selected>1,000 sq ft (Full)</option>
+            <option value="1500">1,500 sq ft (Premium)</option>
+          </select>
+        </div>
+        <div class="input-row">
+          <label>Storage Rent ($/sq ft/mo)</label>
+          <select id="storage_rent" aria-label="Select storage rent rate">
+            <option value="2.00">$2.00 (Budget)</option>
+            <option value="2.50">$2.50</option>
+            <option value="3.00" selected>$3.00 (Market)</option>
+            <option value="3.50">$3.50 (Premium)</option>
+            <option value="4.00">$4.00 (Luxury)</option>
+          </select>
+        </div>
+        <div class="input-row">
+          <label>Storage Occupancy (%)</label>
+          <select id="storage_occ" aria-label="Select expected storage occupancy">
+            <option value="85">85%</option>
+            <option value="90" selected>90%</option>
+            <option value="95">95%</option>
+            <option value="100">100%</option>
+          </select>
+        </div>
+        <div class="input-row">
+          <label>Storage Op Cost ($/mo)
+            <span class="tooltip" title="Additional operating costs for storage operations">ⓘ</span>
+          </label>
+          <input type="number" id="storage_op" value="40000" aria-label="Monthly storage operating costs">
+        </div>
+        <div class="input-row">
+          <label>CUBi Platform Fee ($/mo)</label>
+          <input type="number" id="cubi_fee" value="750" aria-label="Monthly CUBi platform fee">
+        </div>
+        <div class="input-row">
+          <label>CUBi Revenue Share (%)
+            <span class="tooltip" title="Percentage of CUBi-generated revenue shared with platform">ⓘ</span>
+          </label>
+          <select id="cubi_share" aria-label="Select CUBi revenue share percentage">
+            <option value="10">10%</option>
+            <option value="15" selected>15%</option>
+            <option value="20">20%</option>
+            <option value="25">25%</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- ENERGY & REVENUE -->
+    <div class="picklist-section">
+      <h3>Energy & Additional Revenue Streams</h3>
+      <div class="picklist-grid">
+        <div class="picklist-item">
+          <label>CHP/Genset Status</label>
+          <select id="chp_status" aria-label="Select CHP/genset status">
+            <option value="installed" selected>Installed & Operating</option>
+            <option value="pending">Pending Installation</option>
+            <option value="none">Not Included</option>
+          </select>
+        </div>
+        <div class="picklist-item">
+          <label>Energy Savings ($/mo)
+            <span class="tooltip" title="Monthly savings from CHP/efficiency measures">ⓘ</span>
+          </label>
+          <input type="number" id="energy_savings" value="15000" aria-label="Monthly energy savings">
+        </div>
+        <div class="picklist-item">
+          <label>Grid Revenue ($/mo)
+            <span class="tooltip" title="Revenue from selling power back to grid">ⓘ</span>
+          </label>
+          <input type="number" id="grid_revenue" value="5000" aria-label="Monthly grid revenue">
+        </div>
+        <div class="picklist-item">
+          <label>VPP Participation</label>
+          <select id="vpp_status" aria-label="Select VPP participation status">
+            <option value="active" selected>Active (Revenue Generating)</option>
+            <option value="planned">Planned (Future)</option>
+            <option value="none">Not Participating</option>
+          </select>
+        </div>
+        <div class="picklist-item">
+          <label>Rebate Type</label>
+          <select id="rebate_type" aria-label="Select rebate program type">
+            <option value="cleanbc" selected>CleanBC Go Electric</option>
+            <option value="federal">Federal Green Retrofit</option>
+            <option value="provincial">Provincial Energy Rebate</option>
+            <option value="municipal">Municipal Eco-Incentive</option>
+            <option value="combined">Combined Stack</option>
+          </select>
+        </div>
+        <div class="picklist-item">
+          <label>Rebate Amount ($)</label>
+          <input type="number" id="rebate_amt" value="1500000" aria-label="Total rebate amount">
+        </div>
+        <div class="picklist-item">
+          <label>Tax Write-off Type</label>
+          <select id="tax_type" aria-label="Select tax write-off type">
+            <option value="cca" selected>Capital Cost Allowance (CCA)</option>
+            <option value="green">Green Technology Deduction</option>
+            <option value="energy">Energy Efficiency Credit</option>
+            <option value="full">Full Depreciation Stack</option>
+          </select>
+        </div>
+        <div class="picklist-item">
+          <label>Tax Write-off ($)</label>
+          <input type="number" id="tax_writeoff" value="2500000" aria-label="Total tax write-off amount">
+        </div>
+      </div>
+    </div>
+
+    <!-- FINANCING -->
+    <div class="picklist-section">
+      <h3>Gas Reserve Financing & Equipment</h3>
+      <div class="picklist-grid">
+        <div class="picklist-item">
+          <label>UltraStream Genset (GBP)</label>
+          <input type="number" id="genset_gbp" value="7000" aria-label="Genset cost in British Pounds">
+        </div>
+        <div class="picklist-item">
+          <label>GBP/USD Rate</label>
+          <select id="gbp_usd" aria-label="Select GBP to USD exchange rate">
+            <option value="1.20">1.20</option>
+            <option value="1.25">1.25</option>
+            <option value="1.27" selected>1.27</option>
+            <option value="1.30">1.30</option>
+            <option value="1.35">1.35</option>
+          </select>
+        </div>
+        <div class="picklist-item">
+          <label>CUBi Equipment Cost ($)</label>
+          <input type="number" id="cubi_equip" value="150000" aria-label="CUBi equipment cost in USD">
+        </div>
+        <div class="picklist-item">
+          <label>Gas Reserve Collateral ($)</label>
+          <input type="number" id="gas_reserve" value="750000" aria-label="Gas reserve collateral amount">
+        </div>
+        <div class="picklist-item">
+          <label>LTV Ratio (%)</label>
+          <select id="ltv_ratio" aria-label="Select loan-to-value ratio">
+            <option value="60">60%</option>
+            <option value="65">65%</option>
+            <option value="70" selected>70%</option>
+            <option value="75">75%</option>
+            <option value="80">80%</option>
+          </select>
+        </div>
+        <div class="picklist-item">
+          <label>Loan Term (Years)</label>
+          <select id="loan_term" aria-label="Select loan term in years">
+            <option value="5">5</option>
+            <option value="7">7</option>
+            <option value="10" selected>10</option>
+            <option value="15">15</option>
+            <option value="20">20</option>
+          </select>
+        </div>
+        <div class="picklist-item">
+          <label>Interest Rate (%)</label>
+          <select id="interest_rate" aria-label="Select annual interest rate">
+            <option value="3.0">3.0%</option>
+            <option value="3.5">3.5%</option>
+            <option value="4.0">4.0%</option>
+            <option value="4.5" selected>4.5%</option>
+            <option value="5.0">5.0%</option>
+            <option value="5.5">5.5%</option>
+          </select>
+        </div>
+        <div class="picklist-item">
+          <label>Origination Fee (%)</label>
+          <select id="orig_fee" aria-label="Select loan origination fee percentage">
+            <option value="1.0">1.0%</option>
+            <option value="1.5" selected>1.5%</option>
+            <option value="2.0">2.0%</option>
+            <option value="2.5">2.5%</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- ASSUMPTIONS PANEL -->
+    <div class="assumptions-panel">
+      <h4>📋 Key Assumptions</h4>
+      <ul>
+        <li>Storage conversion efficiency: 85% (15% loss to hallways, offices, common areas)</li>
+        <li>CUBi revenue share (15%) applies to energy savings + grid revenue only</li>
+        <li>Operating expenses are additive: office base + storage incremental costs</li>
+        <li>Cap rate applied to stabilized, post-conversion NOI</li>
+        <li>Gas reserve collateral valued at 70% LTV for equipment financing</li>
+      </ul>
+      <button class="calc-btn-top gray" onclick="exportAssumptions()" style="padding:6px 12px;font-size:12px;">📋 Copy Assumptions</button>
+    </div>
+
+    <!-- MOBILE SUMMARY (shown only in mobile mode) -->
+    <div id="mobile-summary" role="region" aria-label="Mobile summary">
+      <h4>📱 Field Summary</h4>
+      <div class="summary-grid">
+        <div>
+          <div class="lbl">NOI After</div>
+          <div class="val" id="mobile-noi">$594,250/mo</div>
+        </div>
+        <div>
+          <div class="lbl">Value Uplift</div>
+          <div class="val" id="mobile-uplift">+$58.9M</div>
+        </div>
+        <div>
+          <div class="lbl">DSCR</div>
+          <div class="val" id="mobile-dscr">9.08x</div>
+        </div>
+        <div>
+          <div class="lbl">LTV Available</div>
+          <div class="val" id="mobile-ltv">$525K</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RESULTS -->
+    <div class="results-grid">
+      <div class="result-box before">
+        <h4>Before Conversion</h4>
+        <div class="res-line"><span class="lbl">Gross Potential Rent</span><span class="val" id="before_gross">$700,000/mo</span></div>
+        <div class="res-line"><span class="lbl">Less: Vacancy (30%)</span><span class="val" id="before_vacancy">-$210,000/mo</span></div>
+        <div class="res-line"><span class="lbl">Effective Gross Income</span><span class="val" id="before_egi">$490,000/mo</span></div>
+        <div class="res-line"><span class="lbl">Less: Operating Expenses</span><span class="val" id="before_opex">-$190,000/mo</span></div>
+        <div class="res-line total"><span class="lbl">NET OPERATING INCOME</span><span class="val" id="before_noi">$300,000/mo</span></div>
+        <div class="val-line"><span class="lbl">Building Value @ Cap Rate</span><span class="val" id="before_value">$60,000,000</span></div>
+      </div>
+      <div class="result-box after">
+        <h4>After Conversion</h4>
+        <div class="res-line"><span class="lbl">Office Revenue</span><span class="val" id="after_office">$175,000/mo</span></div>
+        <div class="res-line"><span class="lbl">Storage Revenue</span><span class="val" id="after_storage">$450,000/mo</span></div>
+        <div class="res-line"><span class="lbl">Energy Savings</span><span class="val" id="after_energy">$15,000/mo</span></div>
+        <div class="res-line"><span class="lbl">Grid Revenue</span><span class="val" id="after_grid">$5,000/mo</span></div>
+        <div class="res-line"><span class="lbl">Less: Operating Expenses</span><span class="val" id="after_opex">-$230,000/mo</span></div>
+        <div class="res-line"><span class="lbl">Less: CUBi Platform Fee</span><span class="val" id="after_cubi">-$750/mo</span></div>
+        <div class="res-line"><span class="lbl">Less: CUBi Revenue Share</span><span class="val" id="after_cubi_share">-$3,000/mo</span></div>
+        <div class="res-line total"><span class="lbl">NET OPERATING INCOME</span><span class="val" id="after_noi">$594,250/mo</span></div>
+        <div class="val-line"><span class="lbl">Building Value @ Cap Rate</span><span class="val" id="after_value">$118,850,000</span></div>
+      </div>
+    </div>
+
+    <div class="uplift">
+      <h4>Value Uplift Summary</h4>
+      <div class="uplift-row">
+        <div class="uplift-item"><h5>NOI Increase</h5><p id="uplift_noi">+$294,250/mo</p></div>
+        <div class="uplift-item"><h5>Building Value</h5><p id="uplift_value">+$58,850,000</p></div>
+        <div class="uplift-item"><h5>Rebate</h5><p id="uplift_rebate">+$1,500,000</p></div>
+        <div class="uplift-item"><h5>Tax Write-off</h5><p id="uplift_tax">+$2,500,000</p></div>
+      </div>
+    </div>
+
+    <div class="bottom-grid">
+      <div class="bottom-box ryan">
+        <h4>CUBi Revenue (Ryan)</h4>
+        <div class="b-line"><span class="lbl">CUBi Platform Fee</span><span class="val" id="ryan_cubi">$9,000/yr</span></div>
+        <div class="b-line"><span class="lbl">CUBi Revenue Share (15%)</span><span class="val" id="ryan_share">$89,145/yr</span></div>
+        <div class="b-line"><span class="lbl">Power/Genset Split</span><span class="val" id="ryan_power">$10,000/yr</span></div>
+        <div class="b-line"><span class="lbl">Origination Fee</span><span class="val" id="ryan_orig">$60,000/deal</span></div>
+        <div class="b-highlight">
+          <p>10 bldgs = <strong id="ryan_10">$168,145/yr</strong></p>
+          <p>25 bldgs = <strong id="ryan_25">$420,363/yr</strong></p>
+          <p>50 bldgs = <strong id="ryan_50">$840,725/yr</strong></p>
+        </div>
+      </div>
+      <div class="bottom-box fin">
+        <h4>Financing & Equipment</h4>
+        <div class="b-line"><span class="lbl">UltraStream Genset</span><span class="val" id="fin_genset">$8,890</span></div>
+        <div class="b-line"><span class="lbl">CUBi Equipment</span><span class="val" id="fin_cubi">$150,000</span></div>
+        <div class="b-line"><span class="lbl">Total Equipment</span><span class="val" id="fin_total">$158,890</span></div>
+        <div class="b-line"><span class="lbl">Gas Reserve</span><span class="val" id="fin_gas">$750,000</span></div>
+        <div class="b-line"><span class="lbl">LTV Available (70%)</span><span class="val" id="fin_ltv">$525,000</span></div>
+        <div class="b-highlight">
+          <p>Coverage: <strong id="fin_coverage">100% (No gap)</strong></p>
+          <p>Monthly Debt Service: <strong id="fin_debt">$5,460/mo</strong></p>
+        </div>
+      </div>
+      <div class="bottom-box deal">
+        <h4>Deal Structure</h4>
+        <div class="b-line"><span class="lbl">Deal A: Owner 20%</span><span class="val" id="deal_a">$1,426,200/yr</span></div>
+        <div class="b-line"><span class="lbl">No guarantor required</span><span class="val">Gas reserve only</span></div>
+        <div class="b-line"><span class="lbl">Deal B: Owner 55%</span><span class="val" id="deal_b">$3,922,050/yr</span></div>
+        <div class="b-line"><span class="lbl">With guarantor</span><span class="val">Off-books possible</span></div>
+        <div class="b-line"><span class="lbl">DSCR</span><span class="val" id="dscr">9.08x</span></div>
+        <div class="b-highlight">
+          <p>Credit-rich, cash-flow-poor owners prefer <strong>Deal B</strong></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <p>GreenSmart Ltd. | Geoff Forrester, CEO | Tony Rampling, EVP | Dave Alexander, CFO | CUBi Platform</p>
+      <div class="footer-stats">
+        <div><h5 id="foot_genset">GBP 7,000</h5><p>Genset Cost</p></div>
+        <div><h5 id="foot_noi">$594,250/mo</h5><p>Full NOI</p></div>
+        <div><h5 id="foot_uplift">+$58.9M</h5><p>Value Uplift</p></div>
+        <div><h5 id="foot_ltv">$525K</h5><p>LTV Available</p></div>
+        <div><h5>720%</h5><p>10-Yr ROI</p></div>
+      </div>
+    </div>
+    
+  </div><!-- /main-content -->
+</div>
+
+<script>
+// ===== UTILITY FUNCTIONS =====
+function format$(v) {
+  if (isNaN(v)) return '$0';
+  const abs = Math.abs(v);
+  if (abs >= 1e6) return '$' + (v/1e6).toFixed(2) + 'M';
+  if (abs >= 1e3) return '$' + Math.round(v).toLocaleString();
+  return '$' + v.toFixed(2);
+}
+function format$mo(v) { return format$(v) + '/mo'; }
+function format$yr(v) { return format$(v) + '/yr'; }
+
+// ===== INPUT VALIDATION =====
+function validateInputs() {
+  const errors = [];
+  const getVal = (id) => +document.getElementById(id)?.value || 0;
+  
+  if (getVal('building_sqft') <= 0) errors.push("Building sqft must be > 0");
+  if (getVal('office_rent') < 0) errors.push("Office rent cannot be negative");
+  const vac = getVal('vacancy');
+  if (vac < 0 || vac > 100) errors.push("Vacancy must be 0-100%");
+  if (getVal('stalls_converted') > getVal('parking_total')) {
+    errors.push("Converted stalls cannot exceed total stalls");
+  }
+  if (getVal('cap_rate') <= 0) errors.push("Cap rate must be > 0%");
+  
+  return errors;
+}
+
+function showToast(msg, type = 'info') {
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.setAttribute('role', 'alert');
+  toast.innerHTML = `<span>${type === 'error' ? '⚠️' : '✅'}</span> ${msg}`;
+  if (type === 'error') toast.style.background = '#dc2626';
+  document.body.appendChild(toast);
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateX(100%)';
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
+}
+
+// ===== AUTO-FILL DEFAULTS =====
+function autoFillDefaults() {
+  const prop = document.getElementById('prop_type').value;
+  const market = document.getElementById('market_cond').value;
+  const strat = document.getElementById('conv_strategy').value;
+  const gen = document.getElementById('genset_supplier').value;
+
+  // Update header summaries
+  document.getElementById('prop-summary').textContent = 
+    document.getElementById('prop_type').options[document.getElementById('prop_type').selectedIndex].text;
+  document.getElementById('market-summary').textContent = 
+    document.getElementById('market_cond').options[document.getElementById('market_cond').selectedIndex].text;
+
+  // Property type defaults
+  if (prop === 'office_tier2') {
+    document.getElementById('building_sqft').value = 200000;
+    document.getElementById('office_rent').value = 3.50;
+    document.getElementById('parking_total').value = 275;
+  } else if (prop === 'office_tier1') {
+    document.getElementById('building_sqft').value = 300000;
+    document.getElementById('office_rent').value = 4.50;
+    document.getElementById('parking_total').value = 400;
+  } else if (prop === 'mixed_use') {
+    document.getElementById('building_sqft').value = 150000;
+    document.getElementById('office_rent').value = 3.00;
+    document.getElementById('parking_total').value = 180;
+  }
+
+  // Market condition defaults
+  if (market === 'crisis') {
+    document.getElementById('vacancy').value = 30;
+    document.getElementById('cap_rate').value = '6.0';
+  } else if (market === 'weak') {
+    document.getElementById('vacancy').value = 25;
+    document.getElementById('cap_rate').value = '5.5';
+  } else if (market === 'stable') {
+    document.getElementById('vacancy').value = 15;
+    document.getElementById('cap_rate').value = '5.0';
+  } else if (market === 'strong') {
+    document.getElementById('vacancy').value = 5;
+    document.getElementById('cap_rate').value = '4.5';
+  }
+
+  // Conversion strategy
+  if (strat === 'full_storage') {
+    document.getElementById('stalls_converted').value = 150;
+    document.getElementById('storage_rent').value = '3.00';
+  } else if (strat === 'partial_storage') {
+    document.getElementById('stalls_converted').value = 80;
+    document.getElementById('storage_rent').value = '3.50';
+  } else if (strat === 'mixed_use_conv') {
+    document.getElementById('stalls_converted').value = 100;
+    document.getElementById('storage_rent').value = '3.00';
+  }
+
+  // Genset supplier
+  if (gen === 'ultrastream') document.getElementById('genset_gbp').value = 7000;
+  else if (gen === 'redtech') document.getElementById('genset_gbp').value = 20000;
+  else if (gen === 'cummins') document.getElementById('genset_gbp').value = 100000;
+  else if (gen === 'cat') document.getElementById('genset_gbp').value = 200000;
+  
+  // Trigger recalculation
+  calculate();
+}
+
+// ===== MAIN CALCULATION =====
+function calculate() {
+  // Validate first
+  const errors = validateInputs();
+  if (errors.length > 0) {
+    showToast(errors.join('\n'), 'error');
+    return;
+  }
+
+  // ===== GET INPUTS =====
+  const bSqft = +document.getElementById('building_sqft').value || 0;
+  const oRent = +document.getElementById('office_rent').value || 0;
+  const vac = +document.getElementById('vacancy').value || 0;
+  const baseOpEx = +document.getElementById('op_expenses').value || 0;
+  const capR = +document.getElementById('cap_rate').value || 6;
+  const pTotal = +document.getElementById('parking_total').value || 0;
+  const sConv = +document.getElementById('stalls_converted').value || 0;
+  const sSqft = +document.getElementById('sqft_per_stall').value || 1000;
+  const sRent = +document.getElementById('storage_rent').value || 3;
+  const sOcc = +document.getElementById('storage_occ').value || 90;
+  const sOp = +document.getElementById('storage_op').value || 0;
+  const eSave = +document.getElementById('energy_savings').value || 0;
+  const gRev = +document.getElementById('grid_revenue').value || 0;
+  const cFee = +document.getElementById('cubi_fee').value || 0;
+  const cShare = +document.getElementById('cubi_share').value || 15;
+  const gGbp = +document.getElementById('genset_gbp').value || 0;
+  const fx = +document.getElementById('gbp_usd').value || 1.27;
+  const cEquip = +document.getElementById('cubi_equip').value || 0;
+  const gasRes = +document.getElementById('gas_reserve').value || 0;
+  const ltvP = +document.getElementById('ltv_ratio').value || 70;
+  const loanY = +document.getElementById('loan_term').value || 10;
+  const intR = +document.getElementById('interest_rate').value || 4.5;
+  const origP = +document.getElementById('orig_fee').value || 1.5;
+  const dealType = document.getElementById('deal_type_select').value;
+
+  // ===== BEFORE CONVERSION =====
+  const gRent = bSqft * oRent;
+  const vAmt = gRent * (vac / 100);
+  const eRent = gRent - vAmt;
+  const noiB = eRent - baseOpEx;
+  const valB = noiB * 12 / (capR / 100);
+
+  // ===== AFTER CONVERSION (FIXED LOGIC) =====
+  // Apply 85% efficiency factor for hallways, offices, common areas
+  const conversionEfficiency = 0.85;
+  const stSqft = sConv * sSqft * conversionEfficiency;
+  const remOff = Math.max(0, bSqft - stSqft); // Ensure non-negative
+  
+  const oRev = remOff * oRent;
+  const sRev = stSqft * sRent * (sOcc / 100);
+  
+  // Operating expenses are ADDITIVE (base office + incremental storage)
+  const afterOpEx = baseOpEx + sOp;
+  
+  // CUBi revenue share applies to CUBi-generated revenue ONLY (energy + grid)
+  const cubiRevenue = eSave + gRev;
+  const cubiShareAmount = cubiRevenue * (cShare / 100);
+  
+  const noiA = oRev + sRev + eSave + gRev - afterOpEx - cFee - cubiShareAmount;
+  const valA = noiA * 12 / (capR / 100);
+
+  // ===== UPLIFT =====
+  const noiUp = noiA - noiB;
+  const valUp = valA - valB;
+
+  // ===== FINANCING =====
+  const gUsd = gGbp * fx;
+  const totEq = gUsd + cEquip;
+  const ltv = gasRes * (ltvP / 100);
+  const cov = totEq > 0 ? (ltv / totEq * 100) : 0;
+  const loanAmt = Math.min(totEq, ltv);
+  
+  // Monthly payment calculation
+  const r = intR / 100 / 12;
+  const n = loanY * 12;
+  const pmt = loanAmt > 0 && r > 0 
+    ? loanAmt * (r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1)
+    : loanAmt / n; // Simple division if no interest
+  
+  const origFee = loanAmt * (origP / 100);
+
+  // ===== DSCR =====
+  const annualDebt = pmt * 12;
+  const dscr = annualDebt > 0 ? (noiA * 12) / annualDebt : 99.99;
+
+  // ===== DEAL TYPES =====
+  const dealA = noiA * 12 * 0.20;
+  const dealB = noiA * 12 * 0.55;
+
+  // ===== RYAN REVENUE =====
+  const ryanCubi = cFee * 12;
+  const ryanShare = cubiRevenue * 12 * (cShare / 100); // Fixed: share of CUBi revenue only
+  const ryanPower = 10000;
+  const ryanTot = ryanCubi + ryanShare + ryanPower;
+
+  // ===== UPDATE DOM - BEFORE =====
+  document.getElementById('before_gross').textContent = format$mo(gRent);
+  document.getElementById('before_vacancy').textContent = '-' + format$mo(vAmt);
+  document.getElementById('before_egi').textContent = format$mo(eRent);
+  document.getElementById('before_opex').textContent = '-' + format$mo(baseOpEx);
+  document.getElementById('before_noi').textContent = format$mo(noiB);
+  document.getElementById('before_value').textContent = format$(valB);
+
+  // ===== UPDATE DOM - AFTER =====
+  document.getElementById('after_office').textContent = format$mo(oRev);
+  document.getElementById('after_storage').textContent = format$mo(sRev);
+  document.getElementById('after_energy').textContent = format$mo(eSave);
+  document.getElementById('after_grid').textContent = format$mo(gRev);
+  document.getElementById('after_opex').textContent = '-' + format$mo(afterOpEx);
+  document.getElementById('after_cubi').textContent = '-' + format$mo(cFee);
+  document.getElementById('after_cubi_share').textContent = '-' + format$mo(cubiShareAmount);
+  document.getElementById('after_noi').textContent = format$mo(noiA);
+  document.getElementById('after_value').textContent = format$(valA);
+
+  // ===== UPDATE DOM - UPLIFT =====
+  document.getElementById('uplift_noi').textContent = (noiUp >= 0 ? '+' : '') + format$mo(noiUp);
+  document.getElementById('uplift_value').textContent = (valUp >= 0 ? '+' : '') + format$(valUp);
+  document.getElementById('uplift_rebate').textContent = '+' + format$(+document.getElementById('rebate_amt').value || 0);
+  document.getElementById('uplift_tax').textContent = '+' + format$(+document.getElementById('tax_writeoff').value || 0);
+
+  // ===== UPDATE DOM - DEALS =====
+  document.getElementById('deal_a').textContent = format$yr(dealA);
+  document.getElementById('deal_b').textContent = format$yr(dealB);
+  document.getElementById('dscr').textContent = dscr.toFixed(2) + 'x';
+
+  // ===== UPDATE DOM - FINANCING =====
+  document.getElementById('fin_genset').textContent = format$(gUsd);
+  document.getElementById('fin_cubi').textContent = format$(cEquip);
+  document.getElementById('fin_total').textContent = format$(totEq);
+  document.getElementById('fin_gas').textContent = format$(gasRes);
+  document.getElementById('fin_ltv').textContent = format$(ltv);
+  document.getElementById('fin_coverage').textContent = cov >= 100 ? '100% (No gap)' : cov.toFixed(0) + '% (Gap: ' + format$(totEq - ltv) + ')';
+  document.getElementById('fin_coverage').style.color = cov >= 100 ? 'var(--success)' : 'var(--danger)';
+  document.getElementById('fin_debt').textContent = format$mo(pmt);
+
+  // ===== UPDATE DOM - RYAN =====
+  document.getElementById('ryan_cubi').textContent = format$yr(ryanCubi);
+  document.getElementById('ryan_share').textContent = format$yr(ryanShare);
+  document.getElementById('ryan_power').textContent = format$yr(ryanPower);
+  document.getElementById('ryan_orig').textContent = format$(origFee) + '/deal';
+  document.getElementById('ryan_10').textContent = format$yr(ryanTot * 10 + origFee * 10);
+  document.getElementById('ryan_25').textContent = format$yr(ryanTot * 25 + origFee * 25);
+  document.getElementById('ryan_50').textContent = format$yr(ryanTot * 50 + origFee * 50);
+
+  // ===== UPDATE DOM - FOOTER =====
+  document.getElementById('foot_genset').textContent = 'GBP ' + gGbp.toLocaleString();
+  document.getElementById('foot_noi').textContent = format$mo(noiA);
+  document.getElementById('foot_uplift').textContent = (valUp >= 0 ? '+' : '') + format$(valUp);
+  document.getElementById('foot_ltv').textContent = format$(ltv);
+
+  // ===== UPDATE MOBILE SUMMARY =====
+  if (document.body.classList.contains('mobile-mode')) {
+    document.getElementById('mobile-noi').textContent = format$mo(noiA);
+    document.getElementById('mobile-uplift').textContent = (valUp >= 0 ? '+' : '') + format$(valUp);
+    document.getElementById('mobile-dscr').textContent = dscr.toFixed(2) + 'x';
+    document.getElementById('mobile-ltv').textContent = format$(ltv);
+  }
+}
+
+// ===== SCENARIO MANAGEMENT =====
+const SCENARIO_PREFIX = 'cubi_scenario_';
+
+function getSavedScenarios() {
+  const scenarios = [];
+  for (let key in localStorage) {
+    if (key.startsWith(SCENARIO_PREFIX)) {
+      try {
+        scenarios.push(JSON.parse(localStorage.getItem(key)));
+      } catch(e) { localStorage.removeItem(key); }
+    }
+  }
+  return scenarios.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
+}
+
+function updateScenarioDropdown() {
+  const select = document.getElementById('scenario-load');
+  const scenarios = getSavedScenarios();
+  document.getElementById('scenario-count').textContent = `${scenarios.length} saved`;
+  
+  while (select.options.length > 1) select.remove(1);
+  
+  scenarios.forEach(sc => {
+    const opt = document.createElement('option');
+    opt.value = sc.name;
+    opt.textContent = `${sc.name} • ${new Date(sc.timestamp).toLocaleDateString()}`;
+    opt.dataset.data = JSON.stringify(sc.inputs);
+    select.appendChild(opt);
+  });
+}
+
+function saveScenarioPrompt() {
+  const name = prompt('Name this scenario (e.g., "Calgary Office - Tier 2"):');
+  if (!name?.trim()) return;
+  
+  const inputs = {};
+  document.querySelectorAll('input, select').forEach(el => {
+    if (el.id) inputs[el.id] = el.value;
+  });
+  
+  const scenario = {
+    name: name.trim(),
+    timestamp: new Date().toISOString(),
+    inputs
+  };
+  
+  localStorage.setItem(SCENARIO_PREFIX + name.trim().replace(/\s+/g, '_'), JSON.stringify(scenario));
+  updateScenarioDropdown();
+  showToast(`✅ "${name}" saved!`);
+}
+
+function loadScenario(name) {
+  const select = document.getElementById('scenario-load');
+  const option = Array.from(select.options).find(opt => opt.value === name);
+  if (!option) return;
+  
+  const inputs = JSON.parse(option.dataset.data);
+  Object.entries(inputs).forEach(([id, val]) => {
+    const el = document.getElementById(id);
+    if (el) el.value = val;
+  });
+  
+  // Update header summaries
+  autoFillDefaults();
+  calculate();
+  window.scrollTo({top: 0, behavior: 'smooth'});
+  showToast(`📥 Loaded "${name}"`);
+}
+
+document.getElementById('scenario-load').addEventListener('change', function() {
+  if (this.value) loadScenario(this.value);
+});
+
+function compareMode() {
+  const scenarios = getSavedScenarios();
+  if (scenarios.length < 2) {
+    showToast('Save at least 2 scenarios to compare.', 'error');
+    return;
+  }
+  
+  const [s1, s2] = scenarios;
+  document.getElementById('comparison-view').style.display = 'block';
+  renderComparison('compare-scenario-1', s1);
+  renderComparison('compare-scenario-2', s2);
+  document.getElementById('comparison-view').scrollIntoView({behavior: 'smooth'});
+}
+
+function renderComparison(containerId, scenario) {
+  const container = document.getElementById(containerId);
+  const inputs = scenario.inputs;
+  
+  const bSqft = +inputs.building_sqft || 0;
+  const oRent = +inputs.office_rent || 0;
+  const vac = +inputs.vacancy || 0;
+  const opEx = +inputs.op_expenses || 0;
+  const capR = +inputs.cap_rate || 6;
+  
+  const gRent = bSqft * oRent;
+  const eRent = gRent * (1 - vac/100);
+  const noi = eRent - opEx;
+  const value = noi * 12 / (capR/100);
+  
+  container.innerHTML = `
+    <h4 style="margin-bottom:12px;">${scenario.name}</h4>
+    <div class="res-line"><span class="lbl">Building Sq Ft</span><span class="val">${(+bSqft).toLocaleString()}</span></div>
+    <div class="res-line"><span class="lbl">Office Rent</span><span class="val">$${oRent}/sq ft/mo</span></div>
+    <div class="res-line"><span class="lbl">Vacancy</span><span class="val">${vac}%</span></div>
+    <div class="res-line total" style="margin-top:16px; padding-top:12px;">
+      <span class="lbl">NOI</span><span class="val">${format$mo(noi)}</span>
+    </div>
+    <div class="res-line total">
+      <span class="lbl">Est. Value</span><span class="val">${format$(value)}</span>
+    </div>
+    <button onclick="loadScenario('${scenario.name}')" 
+            style="margin-top:12px; width:100%; padding:8px; background:var(--primary); color:white; border:none; border-radius:4px; cursor:pointer;font-size:13px;">
+      Load This Scenario
+    </button>
+  `;
+}
+
+function exitCompare() {
+  document.getElementById('comparison-view').style.display = 'none';
+}
+
+function clearAllScenarios() {
+  if (!confirm('Delete ALL saved scenarios? This cannot be undone.')) return;
+  Object.keys(localStorage).forEach(key => {
+    if (key.startsWith(SCENARIO_PREFIX)) localStorage.removeItem(key);
+  });
+  updateScenarioDropdown();
+  showToast('🗑️ All scenarios cleared.');
+}
+
+// ===== PDF EXPORT =====
+async function exportPDF() {
+  if (!window.jspdf) {
+    showToast('PDF library loading... please try again in a moment.', 'error');
+    return;
+  }
+  
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({orientation: 'portrait', unit: 'mm', format: 'a4'});
+  
+  // Branding header
+  doc.setFillColor(15, 23, 42);
+  doc.rect(0, 0, 210, 25, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(16);
+  doc.setFont('helvetica', 'bold');
+  doc.text('CUBi NOI Analysis Report', 14, 18);
+  
+  doc.setFontSize(9);
+  doc.setTextColor(148, 163, 184);
+  doc.text('GreenSmart | Community Utility Billing Integration', 14, 23);
+  
+  // Property summary
+  doc.setTextColor(30, 41, 59);
+  doc.setFontSize(11);
+  const propName = document.getElementById('prop_type').options[document.getElementById('prop_type').selectedIndex].text;
+  doc.text(`Property: ${propName}`, 14, 35);
+  doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 40);
+  
+  // Key metrics table
+  const getNum = (text) => parseFloat(text.replace(/[^0-9.-]/g, '')) || 0;
+  const tableData = [
+    ['Metric', 'Before Conversion', 'After Conversion', 'Uplift'],
+    ['Gross Rent/mo', format$mo(getNum(document.getElementById('before_gross').textContent)), 
+                    format$mo(getNum(document.getElementById('after_office').textContent) + getNum(document.getElementById('after_storage').textContent)), ''],
+    ['Effective Income/mo', document.getElementById('before_egi').textContent, '', ''],
+    ['Operating Expenses/mo', document.getElementById('before_opex').textContent, 
+                            document.getElementById('after_opex').textContent, ''],
+    ['NET OPERATING INCOME/mo', document.getElementById('before_noi').textContent, 
+                                  document.getElementById('after_noi').textContent, 
+                                  document.getElementById('uplift_noi').textContent],
+    ['Property Value', document.getElementById('before_value').textContent, 
+                       document.getElementById('after_value').textContent, 
+                       document.getElementById('uplift_value').textContent]
+  ];
+  
+  doc.autoTable({
+    startY: 48,
+    head: [tableData[0]],
+    body: tableData.slice(1),
+    theme: 'grid',
+    headStyles: { fillColor: [59, 130, 246], textColor: 255, fontSize: 9 },
+    styles: { fontSize: 8, cellPadding: 3 },
+    columnStyles: { 
+      0: { fontStyle: 'bold', cellWidth: 50 },
+      3: { fontStyle: 'bold', textColor: [22, 163, 74] }
+    }
+  });
+  
+  // Financing summary
+  let y = doc.lastAutoTable.finalY + 15;
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Financing & Equipment', 14, y);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  
+  const finData = [
+    ['UltraStream Genset', document.getElementById('fin_genset').textContent],
+    ['CUBi Equipment', document.getElementById('fin_cubi').textContent],
+    ['Gas Reserve Collateral', document.getElementById('fin_gas').textContent],
+    ['LTV Available (70%)', document.getElementById('fin_ltv').textContent],
+    ['Est. Monthly Debt Service', document.getElementById('fin_debt').textContent],
+    ['Debt Service Coverage Ratio', document.getElementById('dscr').textContent]
+  ];
+  
+  doc.autoTable({
+    startY: y + 5,
+    body: finData,
+    theme: 'plain',
+    styles: { fontSize: 8, cellPadding: 2 },
+    columnStyles: { 0: { fontStyle: 'italic' } }
+  });
+  
+  // Footer
+  y = doc.lastAutoTable.finalY + 15;
+  doc.setFontSize(8);
+  doc.setTextColor(100, 116, 139);
+  doc.text('Confidential • Prepared with CUBi NOI Calculator • GreenSmart Ltd.', 14, y);
+  doc.text('geoff@greensmart.example | +1 (403) 555-0199', 14, y+4);
+  
+  // Save
+  const safeName = propName.replace(/[^a-z0-9]/gi, '_').substring(0, 20);
+  doc.save(`CUBi-NOI-${safeName}-${new Date().toISOString().slice(0,10)}.pdf`);
+  showToast('📄 PDF exported successfully!');
+}
+
+// ===== ASSUMPTIONS EXPORT =====
+function exportAssumptions() {
+  const assumptions = `CUBi NOI Calculator - Key Assumptions
+Generated: ${new Date().toLocaleString()}
+
+• Storage conversion efficiency: 85% (15% loss to hallways, offices, common areas)
+• CUBi revenue share (${document.getElementById('cubi_share').value}%) applies to energy savings + grid revenue only
+• Operating expenses are additive: office base + storage incremental costs
+• Cap rate applied to stabilized, post-conversion NOI
+• Gas reserve collateral valued at ${document.getElementById('ltv_ratio').value}% LTV for equipment financing
+• Property: ${document.getElementById('prop_type').options[document.getElementById('prop_type').selectedIndex].text}
+• Market: ${document.getElementById('market_cond').options[document.getElementById('market_cond').selectedIndex].text}
+• Conversion: ${document.getElementById('conv_strategy').options[document.getElementById('conv_strategy').selectedIndex].text}`;
+  
+  navigator.clipboard.writeText(assumptions).then(() => {
+    showToast('📋 Assumptions copied to clipboard!');
+  }).catch(() => {
+    // Fallback for older browsers
+    const textarea = document.createElement('textarea');
+    textarea.value = assumptions;
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textarea);
+    showToast('📋 Assumptions copied to clipboard!');
+  });
+}
+
+// ===== MOBILE FIELD MODE =====
+function toggleMobileMode() {
+  document.body.classList.toggle('mobile-mode');
+  const isMobile = document.body.classList.contains('mobile-mode');
+  
+  if (isMobile) {
+    // Add collapsible headers to sections
+    document.querySelectorAll('.picklist-section h3').forEach(h3 => {
+      if (h3.classList.contains('collapsible-header')) return;
+      const content = h3.nextElementSibling;
+      if (content && (content.classList.contains('picklist-grid') || content.classList.contains('main-inputs'))) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'collapsible-section';
+        
+        const header = document.createElement('div');
+        header.className = 'collapsible-header';
+        header.setAttribute('role', 'button');
+        header.setAttribute('aria-expanded', 'true');
+        header.innerHTML = `<span>${h3.textContent}</span> <span class="toggle-icon">▲</span>`;
+        header.onclick = function() {
+          content.classList.toggle('active');
+          const icon = this.querySelector('.toggle-icon');
+          icon.textContent = content.classList.contains('active') ? '▲' : '▼';
+          this.setAttribute('aria-expanded', content.classList.contains('active'));
+        };
+        
+        content.classList.add('collapsible-content', 'active');
+        h3.parentNode.insertBefore(wrapper, h3);
+        wrapper.appendChild(header);
+        wrapper.appendChild(content);
+        h3.remove(); // Remove original h3
+      }
+    });
+  } else {
+    // Restore desktop view
+    document.querySelectorAll('.collapsible-header').forEach(header => {
+      const content = header.nextElementSibling;
+      const wrapper = header.parentElement;
+      content.classList.remove('collapsible-content', 'active');
+      // Restore h3
+      const h3 = document.createElement('h3');
+      h3.textContent = header.querySelector('span:first-child').textContent;
+      h3.className = '';
+      wrapper.parentNode.insertBefore(h3, wrapper);
+      wrapper.parentNode.insertBefore(content, wrapper);
+      wrapper.remove();
+    });
+  }
+  
+  localStorage.setItem('cubi-mobile-mode', isMobile);
+  showToast(isMobile ? '📱 Field Mode ON' : '💻 Desktop Mode');
+}
+
+// ===== CLIENT VIEW MODE =====
+function toggleClientMode() {
+  const inputs = document.querySelectorAll('.picklist-section, .main-inputs, .scenario-bar, .assumptions-panel');
+  const isClientView = inputs[0].style.display === 'none';
+  
+  inputs.forEach(el => el.style.display = isClientView ? '' : 'none');
+  
+  if (!isClientView) {
+    // Hide inputs - show results only
+    document.querySelector('.header-actions').style.display = 'none';
+    document.querySelector('.subheader').style.display = 'none';
+    showToast('🎯 Client View: Inputs hidden. Use PDF export to share.');
+  } else {
+    // Restore
+    document.querySelector('.header-actions').style.display = 'flex';
+    document.querySelector('.subheader').style.display = 'flex';
+    showToast('✏️ Editor View restored');
+  }
+}
+
+// ===== DARK MODE =====
+function toggleDarkMode() {
+  document.body.classList.toggle('dark-mode');
+  const isDark = document.body.classList.contains('dark-mode');
+  localStorage.setItem('cubi-dark-mode', isDark);
+  showToast(isDark ? '🌙 Dark mode ON' : '☀️ Light mode');
+}
+
+// ===== INITIALIZATION =====
+document.addEventListener('DOMContentLoaded', () => {
+  // Load preferences
+  if (localStorage.getItem('cubi-dark-mode') === 'true') {
+    document.body.classList.add('dark-mode');
+  }
+  if (localStorage.getItem('cubi-mobile-mode') === 'true' || window.innerWidth < 768) {
+    toggleMobileMode();
+  }
+  
+  // Initialize scenario dropdown
+  updateScenarioDropdown();
+  
+  // Real-time calculation on input change
+  document.querySelectorAll('input, select').forEach(el => {
+    el.addEventListener('input', calculate);
+    el.addEventListener('change', calculate);
+  });
+  
+  // Initial calculation
+  calculate();
+  
+  // Handle window resize for mobile detection
+  let resizeTimer;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      const isSmall = window.innerWidth < 768;
+      const isMobileMode = document.body.classList.contains('mobile-mode');
+      if (isSmall && !isMobileMode) toggleMobileMode();
+      if (!isSmall && isMobileMode) toggleMobileMode();
+    }, 250);
+  });
+});
+</script>
+</body>
+</html>
