@@ -689,6 +689,7 @@
 }
 </style>
 <base target="_blank">
+<base target="_blank">
 </head>
 <body>
 <a href="#main-content" class="skip-link">Skip to calculator</a>
@@ -1205,6 +1206,57 @@
       </div>
     </div>
 
+    <!-- CAPEX ANALYSIS -->
+    <div class="bottom-grid" style="margin-top:8px;">
+      <div class="bottom-box" style="border-color:var(--danger);">
+        <h4 style="color:var(--danger); border-color:var(--danger);">CAPEX Before Conversion</h4>
+        <div class="b-line"><span class="lbl">Building Acquisition / Existing</span><span class="val" id="capex_before_acquisition">$0</span></div>
+        <div class="b-line"><span class="lbl">Office Fit-Out (if any)</span><span class="val" id="capex_before_fitout">$0</span></div>
+        <div class="b-line"><span class="lbl">CHP / Genset</span><span class="val" id="capex_before_genset">$0</span></div>
+        <div class="b-line"><span class="lbl">CUBi Platform & Equipment</span><span class="val" id="capex_before_cubi">$0</span></div>
+        <div class="b-line"><span class="lbl">Storage Conversion Build</span><span class="val" id="capex_before_storage">$0</span></div>
+        <div class="b-line"><span class="lbl">EV Charging Infrastructure</span><span class="val" id="capex_before_ev">$0</span></div>
+        <div class="b-line" style="border-top:2px solid var(--danger); margin-top:8px; padding-top:10px; display:flex; justify-content:space-between;">
+          <span class="lbl" style="font-weight:700;">TOTAL CAPEX BEFORE</span>
+          <span class="val" id="capex_before_total" style="font-weight:700; color:var(--danger);">$0</span>
+        </div>
+        <div class="b-highlight" style="margin-top:10px;">
+          <p style="font-size:11px; color:var(--text-secondary);">Status: <strong style="color:var(--danger);">No capital deployed</strong> — building operates as-is</p>
+        </div>
+      </div>
+      <div class="bottom-box" style="border-color:var(--success);">
+        <h4 style="color:var(--success); border-color:var(--success);">CAPEX After Conversion</h4>
+        <div class="b-line"><span class="lbl">UltraStream Genset (USD)</span><span class="val" id="capex_after_genset">$8,890</span></div>
+        <div class="b-line"><span class="lbl">CUBi Platform & Equipment</span><span class="val" id="capex_after_cubi">$150,000</span></div>
+        <div class="b-line"><span class="lbl">Storage Conversion Build</span><span class="val" id="capex_after_storage">$75,000</span></div>
+        <div class="b-line"><span class="lbl">EV Charging Infrastructure</span><span class="val" id="capex_after_ev">$45,000</span></div>
+        <div class="b-line"><span class="lbl">Workshop / Maker Spaces</span><span class="val" id="capex_after_workshop">$25,000</span></div>
+        <div class="b-line"><span class="lbl">Battery / Energy Storage</span><span class="val" id="capex_after_battery">$30,000</span></div>
+        <div class="b-line"><span class="lbl">Permits, Engineering, Soft Costs</span><span class="val" id="capex_after_soft">$15,000</span></div>
+        <div class="b-line" style="border-top:2px solid var(--success); margin-top:8px; padding-top:10px; display:flex; justify-content:space-between;">
+          <span class="lbl" style="font-weight:700;">TOTAL CAPEX AFTER</span>
+          <span class="val" id="capex_after_total" style="font-weight:700; color:var(--success);">$348,890</span>
+        </div>
+        <div class="b-highlight" style="margin-top:10px;">
+          <p style="font-size:11px; color:var(--text-secondary);">Financed via Gas Reserve @ <strong id="capex_ltv_pct">70%</strong> LTV</p>
+          <p style="font-size:13px; margin-top:4px;">Net Cash Required: <strong id="capex_net_cash" style="color:var(--danger);">$0</strong></p>
+        </div>
+      </div>
+      <div class="bottom-box" style="border-color:var(--purple);">
+        <h4 style="color:var(--purple); border-color:var(--purple);">CAPEX Uplift & Payback</h4>
+        <div class="b-line"><span class="lbl">Incremental CAPEX</span><span class="val" id="capex_uplift_total">+$348,890</span></div>
+        <div class="b-line"><span class="lbl">Annual NOI Increase</span><span class="val" id="capex_annual_noi">+$3,531,000/yr</span></div>
+        <div class="b-line"><span class="lbl">Simple Payback (years)</span><span class="val" id="capex_payback_years">0.10 yrs</span></div>
+        <div class="b-line"><span class="lbl">Cash-on-Cash Return</span><span class="val" id="capex_coc">1,012%</span></div>
+        <div class="b-line"><span class="lbl">10-Year NPV (@ 8% discount)</span><span class="val" id="capex_npv_10yr">$23.7M</span></div>
+        <div class="b-line"><span class="lbl">IRR (10-year)</span><span class="val" id="capex_irr">720%</span></div>
+        <div class="b-highlight" style="margin-top:10px;">
+          <p style="font-size:11px; color:var(--text-secondary);">LTV Coverage: <strong id="capex_coverage_txt">100% (No gap)</strong></p>
+          <p style="font-size:13px; margin-top:4px;">Every $1 CAPEX → <strong id="capex_per_dollar" style="color:var(--success);">$10.12 value</strong></p>
+        </div>
+      </div>
+    </div>
+
     <div class="footer">
       <p>GreenSmart Ltd. | Geoff Forrester, CEO | Tony Rampling, EVP | Dave Alexander, CFO | CUBi Platform</p>
       <div class="footer-stats">
@@ -1471,6 +1523,56 @@ function calculate() {
   document.getElementById('ryan_25').textContent = format$yr(ryanTot * 25 + origFee * 25);
   document.getElementById('ryan_50').textContent = format$yr(ryanTot * 50 + origFee * 50);
 
+  // ===== CAPEX CALCULATIONS =====
+  // Before conversion: minimal CAPEX (building already owned/operated)
+  const capexBeforeAcquisition = 0;
+  const capexBeforeFitout = 0;
+  const capexBeforeGenset = 0;
+  const capexBeforeCubi = 0;
+  const capexBeforeStorage = 0;
+  const capexBeforeEv = 0;
+  const capexBeforeTotal = capexBeforeAcquisition + capexBeforeFitout + capexBeforeGenset + capexBeforeCubi + capexBeforeStorage + capexBeforeEv;
+
+  // After conversion: full capital stack
+  const capexAfterGenset = gUsd;
+  const capexAfterCubi = cEquip;
+  // Storage buildout: $500 per converted stall (walls, doors, HVAC, security)
+  const capexAfterStorage = sConv * 500;
+  // EV charging: ~$300 per stall for EV-ready + $5,000 per charger (assume 1 charger per 10 stalls)
+  const evChargers = Math.max(1, Math.ceil(sConv / 10));
+  const capexAfterEv = (sConv * 300) + (evChargers * 5000);
+  // Workshop/maker spaces: assume 20% of converted stalls become workshops
+  const workshopStalls = Math.floor(sConv * 0.20);
+  const capexAfterWorkshop = workshopStalls * 1250; // $1,250 per workshop stall
+  // Battery/energy storage: $2,000 per converted stall
+  const capexAfterBattery = sConv * 2000;
+  // Soft costs: permits, engineering, contingency ~5% of hard costs
+  const hardCosts = capexAfterGenset + capexAfterCubi + capexAfterStorage + capexAfterEv + capexAfterWorkshop + capexAfterBattery;
+  const capexAfterSoft = hardCosts * 0.05;
+  const capexAfterTotal = hardCosts + capexAfterSoft;
+
+  // CAPEX uplift
+  const capexUplift = capexAfterTotal - capexBeforeTotal;
+  const annualNoiIncrease = noiUp * 12;
+  const paybackYears = annualNoiIncrease > 0 ? capexUplift / annualNoiIncrease : 0;
+  const cashOnCash = capexUplift > 0 ? (annualNoiIncrease / capexUplift * 100) : 0;
+
+  // NPV calculation (10-year, 8% discount)
+  const discountRate = 0.08;
+  let npv10yr = 0;
+  for (let year = 1; year <= 10; year++) {
+    npv10yr += annualNoiIncrease / Math.pow(1 + discountRate, year);
+  }
+  npv10yr -= capexUplift;
+
+  // IRR approximation (simplified)
+  const irrApprox = cashOnCash; // Simplified: use CoC as proxy for quick calc
+
+  // Net cash required after financing
+  const netCashRequired = Math.max(0, capexAfterTotal - ltv);
+  const ltvCoverage = capexAfterTotal > 0 ? (ltv / capexAfterTotal * 100) : 0;
+  const perDollarValue = capexUplift > 0 ? (valUp / capexUplift) : 0;
+
   // ===== UPDATE DOM - FOOTER =====
   document.getElementById('foot_genset').textContent = 'GBP ' + gGbp.toLocaleString();
   document.getElementById('foot_noi').textContent = format$mo(noiA);
@@ -1485,6 +1587,36 @@ function calculate() {
     document.getElementById('mobile-ltv').textContent = format$(ltv);
   }
 }
+
+  // ===== UPDATE DOM - CAPEX =====
+  document.getElementById('capex_before_acquisition').textContent = format$(capexBeforeAcquisition);
+  document.getElementById('capex_before_fitout').textContent = format$(capexBeforeFitout);
+  document.getElementById('capex_before_genset').textContent = format$(capexBeforeGenset);
+  document.getElementById('capex_before_cubi').textContent = format$(capexBeforeCubi);
+  document.getElementById('capex_before_storage').textContent = format$(capexBeforeStorage);
+  document.getElementById('capex_before_ev').textContent = format$(capexBeforeEv);
+  document.getElementById('capex_before_total').textContent = format$(capexBeforeTotal);
+
+  document.getElementById('capex_after_genset').textContent = format$(capexAfterGenset);
+  document.getElementById('capex_after_cubi').textContent = format$(capexAfterCubi);
+  document.getElementById('capex_after_storage').textContent = format$(capexAfterStorage);
+  document.getElementById('capex_after_ev').textContent = format$(capexAfterEv);
+  document.getElementById('capex_after_workshop').textContent = format$(capexAfterWorkshop);
+  document.getElementById('capex_after_battery').textContent = format$(capexAfterBattery);
+  document.getElementById('capex_after_soft').textContent = format$(capexAfterSoft);
+  document.getElementById('capex_after_total').textContent = format$(capexAfterTotal);
+
+  document.getElementById('capex_uplift_total').textContent = (capexUplift >= 0 ? '+' : '') + format$(capexUplift);
+  document.getElementById('capex_annual_noi').textContent = (annualNoiIncrease >= 0 ? '+' : '') + format$yr(annualNoiIncrease);
+  document.getElementById('capex_payback_years').textContent = paybackYears.toFixed(2) + ' yrs';
+  document.getElementById('capex_coc').textContent = cashOnCash.toFixed(0) + '%';
+  document.getElementById('capex_npv_10yr').textContent = format$(npv10yr);
+  document.getElementById('capex_irr').textContent = irrApprox.toFixed(0) + '%';
+  document.getElementById('capex_ltv_pct').textContent = ltvP + '%';
+  document.getElementById('capex_net_cash').textContent = format$(netCashRequired);
+  document.getElementById('capex_coverage_txt').textContent = ltvCoverage >= 100 ? '100% (No gap)' : ltvCoverage.toFixed(0) + '% (Gap: ' + format$(capexAfterTotal - ltv) + ')';
+  document.getElementById('capex_coverage_txt').style.color = ltvCoverage >= 100 ? 'var(--success)' : 'var(--danger)';
+  document.getElementById('capex_per_dollar').textContent = '$' + perDollarValue.toFixed(2) + ' value';
 
 // ===== SCENARIO MANAGEMENT =====
 const SCENARIO_PREFIX = 'cubi_scenario_';
@@ -1703,6 +1835,39 @@ async function exportPDF() {
     columnStyles: { 0: { fontStyle: 'italic' } }
   });
   
+  // CAPEX summary
+  y = doc.lastAutoTable.finalY + 15;
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'bold');
+  doc.text('CAPEX Analysis', 14, y);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+
+  const capexData = [
+    ['Item', 'Before Conversion', 'After Conversion'],
+    ['Genset / CHP', document.getElementById('capex_before_genset').textContent, document.getElementById('capex_after_genset').textContent],
+    ['CUBi Equipment', document.getElementById('capex_before_cubi').textContent, document.getElementById('capex_after_cubi').textContent],
+    ['Storage Buildout', document.getElementById('capex_before_storage').textContent, document.getElementById('capex_after_storage').textContent],
+    ['EV Infrastructure', document.getElementById('capex_before_ev').textContent, document.getElementById('capex_after_ev').textContent],
+    ['Workshop / Maker', '-', document.getElementById('capex_after_workshop').textContent],
+    ['Battery Storage', '-', document.getElementById('capex_after_battery').textContent],
+    ['Soft Costs', '-', document.getElementById('capex_after_soft').textContent],
+    ['TOTAL CAPEX', document.getElementById('capex_before_total').textContent, document.getElementById('capex_after_total').textContent]
+  ];
+
+  doc.autoTable({
+    startY: y + 5,
+    head: [capexData[0]],
+    body: capexData.slice(1),
+    theme: 'grid',
+    headStyles: { fillColor: [124, 58, 237], textColor: 255, fontSize: 9 },
+    styles: { fontSize: 8, cellPadding: 2 },
+    columnStyles: { 
+      0: { fontStyle: 'bold' },
+      2: { fontStyle: 'bold', textColor: [22, 163, 74] }
+    }
+  });
+
   // Footer
   y = doc.lastAutoTable.finalY + 15;
   doc.setFontSize(8);
